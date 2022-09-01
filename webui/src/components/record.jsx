@@ -15,6 +15,7 @@ import { Versions } from './versions.jsx';
 import { getSchemaOrderedMajorAndMinorFields } from './schema.jsx';
 import { Card } from 'react-bootstrap';
 import PiwikTracker from 'piwik-react-router';
+import { TwitterShareButton, TwitterIcon, FacebookShareButton, FacebookIcon} from 'react-share';
 
 const PT = React.PropTypes;
 
@@ -136,7 +137,7 @@ const Record = React.createClass({
         event.preventDefault();
         if (window._paq) {
             const metadata = this.props.record.get('metadata') || Map();
-            const doi = metadata.get('DOI').replace("http://doi.org/", "");
+            const doi = metadata.get('DOI').replace("https://doi.org/", "");
             window._paq.push(['trackEvent', 'b2share', event.type, doi]);
         }
     },
@@ -380,6 +381,124 @@ const Record = React.createClass({
     fixedFields: [
         'community', 'titles', 'descriptions', 'creators', 'keywords', 'disciplines', 'publication_state'
     ],
+    
+    renderShareButtons(doi){
+        const record = this.props.record.toJS ? this.props.record.toJS() : this.props.record;
+        const title = record.metadata.titles[0].title || "";
+        return(
+                <div>
+                <span>
+                <TwitterShareButton
+                    title={title}
+                    url={doi}
+                    windowWidth={800}
+                    windowHeight={800}
+                    style={{cursor: "pointer"}}
+                    ><TwitterIcon size={32} round/>
+                </TwitterShareButton> 
+                </span>
+                <span>
+                <FacebookShareButton
+                    quote={title}
+                    url={doi}
+                    windowWidth={800}
+                    windowHeight={800}
+                    style={{cursor: "pointer"}}
+                    ><FacebookIcon size={32} round/>
+                </FacebookShareButton>
+                </span>
+                </div>
+        )
+    }, 
+
+    renderCitations(doi) {
+        
+        try {
+            const headers= {"Accept":"text/x-bibliography; style=apa"};
+            const url = doi.replace('http', 'https')
+            fetch(url, {headers})
+            .then(response => {
+                if(response.ok){
+                    this.setState({responsestatus: response.status, responseok: true})
+                    return response.text()
+                }
+                
+            }).then(text=>this.setState({data: text.replace(/<\/?i>/g, "")})
+            ).catch((error) => {
+                console.log(error + " from "+ url)
+                this.setState({responsestatus: 404, responseok: false})
+            })
+        } catch (error) {
+            console.log(error)
+            this.setState({responsestatus: 0, responseok: false})
+        }
+
+        if(this.state.responsestatus == null){
+            //This if is for the cationbox not to rendering anything before it has fetched something from the DOI.
+        } else if(this.state.responseok == true){
+            function onButtonClick() {
+                const headers= {"Accept":"application/x-bibtex"};
+                const url = doi.replace('http', 'https')
+                fetch(url, {headers}).then(response=>response.text()).then(text=>copyToClipboard(text));
+            }
+            return (
+                <div className="well">
+                <div className="row">
+                    <h3 className="col-sm-9">
+                        { 'Share' }
+                    </h3>
+                </div>
+                <div className="row">
+                    <div className="col-sm-9">
+                        {this.renderShareButtons(doi)}
+                    </div>
+                </div>
+                <div className="row">
+                    <h3 className="col-sm-9">
+                        { 'Cite as' }
+                    </h3>
+                </div>
+                <div className="row">
+                <div className="col-sm-9" > {this.state.data} </div>
+                <b className="col-sm-9">
+                        Copy BibTeX  
+                        <span style={this.props.style}>
+                            <span><a className="btn btn-xs btn-default" onClick={onButtonClick.bind(this)} title="Copy BibTeX"><i className="fa fa-clipboard"/></a></span>
+                        </span>
+                </b>
+                </div>
+                <a href={"https://citation.crosscite.org?doi=" + doi}>More citation choices</a>
+                </div>
+            )
+        } else {
+            return(
+                <div className="well">
+                <div>
+                    <li style={{
+                        listStyleType : "none",
+                        boxsizing : "border-box",
+                        backgroundColor : "#fcf8e3",
+                        bordercolor : "#fbeed5",
+                        color : "#c09853" ,
+                        padding : "15px",
+                        marginbottom : "20px",
+                        border : "1px solid transparent",
+                        borderradius : "4px"
+                    }}>
+                        This citation is not available at this moment.
+                    </li>
+                </div>
+                </div>
+
+            )
+        }
+        
+            
+        
+
+
+    },
+
 
     renderCitations(doi) {
         return (
