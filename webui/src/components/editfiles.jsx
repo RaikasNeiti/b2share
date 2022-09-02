@@ -839,6 +839,36 @@ export const PersistentIdentifier = React.createClass({
     },
 });
 
+export const CitationBox = React.createClass({
+    getInitialState() {
+        return {data: null}
+    },
+    componentDidMount() {
+        const headers= {"Accept":"text/x-bibliography; style=apa"};
+        const url = this.props.doi.replace('http', 'https')
+        fetch(url, {headers}).then(response=>response.text()).then(text=>this.setState({data: text.replace(/<\/?i>/g, "")}));
+    },
+    render: function() {
+        return(
+            <span>{this.state.data}</span>
+        );
+    }
+});
+
+export const BibtexExport = React.createClass({
+    onButtonClick() {
+        const headers= {"Accept":"application/x-bibtex"};
+        const url = this.props.doi.replace('http', 'https')
+        fetch(url, {headers}).then(response=>response.text()).then(text=>copyToClipboard(text));
+    },
+    render: function() {
+    return (
+        <span style={this.props.style}>
+            <span><a className="btn btn-xs btn-default" onClick={this.onButtonClick.bind(this)} title="Copy BibTeX"><i className="fa fa-clipboard"/></a></span>
+        </span>
+    );
+}});
+
 
 export function copyToClipboard(text) {
     // from https://stackoverflow.com/questions/400212/how-do-i-copy-to-the-clipboard-in-javascript

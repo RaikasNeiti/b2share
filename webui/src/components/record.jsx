@@ -10,7 +10,7 @@ import { keys, humanSize } from '../data/misc';
 import { ReplaceAnimate } from './animate.jsx';
 import { ImplodedList } from './common.jsx';
 import { Wait, Err } from './waiting.jsx';
-import { FileRecordHeader, FileRecordRow, PersistentIdentifier, copyToClipboard } from './editfiles.jsx';
+import { FileRecordHeader, FileRecordRow, PersistentIdentifier, copyToClipboard, CitationBox, BibtexExport } from './editfiles.jsx';
 import { Versions } from './versions.jsx';
 import { getSchemaOrderedMajorAndMinorFields } from './schema.jsx';
 import { Card } from 'react-bootstrap';
@@ -417,6 +417,7 @@ const Record = React.createClass({
             const headers= {"Accept":"text/x-bibliography; style=apa"};
             const url = doi
             if (url.includes("https") == false) { url = doi.replace('http', 'https') }
+
             fetch(url, {headers})
             .then(response => {
                 if(response.ok){
@@ -439,8 +440,9 @@ const Record = React.createClass({
         } else if(this.state.responseok == true){
             function onButtonClick() {
                 const headers= {"Accept":"application/x-bibtex"};
+
                 const url = doi
-                if (url.includes("https") == false) { url = doi.replace('http', 'https') }
+                if (url.includes("https") == false) { url = doi.replace('http', 'https')
                 fetch(url, {headers}).then(response=>response.text()).then(text=>copyToClipboard(text));
             }
             return (
@@ -498,6 +500,26 @@ const Record = React.createClass({
             
         
 
+
+    },
+
+    renderCitations(doi) {
+        return (
+            <div className="well">
+            <div className="row">
+                <h3 className="col-sm-9">
+                    { 'Cite as' }
+                </h3>
+            </div>
+            <div className="row">
+                <div className="col-sm-9"><CitationBox doi={doi}/></div>
+            <b className="col-sm-9">
+                    Copy BibTeX <BibtexExport doi={doi}/>
+            </b>
+            </div>
+            <a href={"https://citation.crosscite.org?doi=" + doi}>More citation choices</a>
+            </div>
+        )
 
     },
 
